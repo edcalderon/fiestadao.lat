@@ -2,9 +2,7 @@
 
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { client } from "./client";
-import { FiestaDAOProvider } from "@/context/FiestaDAOContext";
 import { AstarIntegration } from "@/components/AstarIntegration";
-import ProposalManager from "@/components/ProposalManagerForm";
 import { Proposals } from "@/components/Proposals";
 import { Governance } from "@/components/Governance";
 import { NFTBadges } from "@/components/NFTBadges";

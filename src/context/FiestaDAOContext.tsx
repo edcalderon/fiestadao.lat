@@ -1,3 +1,5 @@
+'use client';
+
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useActiveAccount, useActiveWalletChain, useReadContract, useSendTransaction } from 'thirdweb/react';
 import { prepareContractCall, getContract, readContract } from 'thirdweb';

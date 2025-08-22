@@ -33,34 +33,40 @@ export function Governance() {
 
   const handleStake = async () => {
     if (!isConnected) {
-      setError("Please connect your wallet to stake tokens");
+      setError("Por favor, conecta tu wallet para hacer staking de ASTR");
       return;
     }
     
     if (!stakeAmount || parseFloat(stakeAmount) <= 0) {
-      setError("Please enter a valid amount to stake");
+      setError("Por favor ingresa una cantidad válida para hacer staking");
       return;
     }
     
+    // Clear any previous messages
+    setError(null);
+    setSuccess(null);
+    
+    // Set loading state
+    setIsStaking(true);
+    
     try {
-      setIsStaking(true);
-      setError(null);
-      setSuccess(null);
-      
       // Convert the amount to wei (18 decimals)
       const amountInWei = parseEther(stakeAmount);
       
-      // Call the stakeTokens function from the context
+      // Store the staked amount for the success message
+      const stakedAmount = stakeAmount;
+      
+      // Call the stakeTokens function and wait for it to complete
+      // This will throw an error if the transaction fails
       await stakeTokens(amountInWei);
       
-      // Refresh the voting power display
+      // If we get here, the transaction was successful
+      // Refresh voting power to update the UI
       await refreshVotingPower();
       
-      // Save the staked amount for the success message
-      const stakedAmount = stakeAmount;
-      setStakeAmount("10"); // Reset to default 10 ASTR
-      // Show success message with the actual staked amount
+      // Only show success message after everything is confirmed
       setSuccess(`¡${stakedAmount} ASTR stakeados exitosamente! Tu poder de voto ha aumentado.`);
+      setStakeAmount("10");
     } catch (err: any) {
       console.error('Error staking tokens:', err);
       if (err.message?.includes('insufficient funds') || err.message?.includes('InsufficientBalance')) {
@@ -150,34 +156,58 @@ export function Governance() {
             )}
             
             <div className="mb-4">
-              <label htmlFor="stake-amount" className="block text-sm font-medium text-white mb-1">
-                Cantidad de ASTR a stakear
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="stake-amount" className="block text-sm font-medium text-white">
+                  Cantidad de ASTR a stakear
+                </label>
+                <button 
+                  type="button"
+                  onClick={() => setStakeAmount("10")}
+                  className="text-xs text-purple-300 hover:text-white transition-colors"
+                >
+                  Restablecer
+                </button>
+              </div>
               <div className="relative rounded-md shadow-sm">
                 <input
                   type="number"
                   id="stake-amount"
                   value={stakeAmount}
-                  onChange={(e) => setStakeAmount(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                      setStakeAmount(value);
+                    }
+                  }}
                   min="10"
                   step="0.1"
-                  className="block w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="block w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 transition-colors"
                   placeholder="10"
+                  disabled={isStaking}
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                   <span className="text-white sm:text-sm">ASTR</span>
                 </div>
               </div>
-              <p className="mt-1 text-xs text-white/60">
-                Mínimo recomendado: 10 ASTR
-              </p>
+              <div className="flex justify-between mt-1">
+                <p className="text-xs text-white/60">
+                  Mínimo recomendado: 10 ASTR
+                </p>
+                <p className="text-xs text-purple-300">
+                  Saldo: {userStakeFormatted} ASTR
+                </p>
+              </div>
             </div>
             
             <div className="flex space-x-2">
               <button
                 onClick={handleStake}
-                disabled={isStaking || loading}
-                className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
+                disabled={isStaking || loading || !stakeAmount || parseFloat(stakeAmount) <= 0}
+                className={`flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform ${
+                  isStaking || loading || !stakeAmount || parseFloat(stakeAmount) <= 0 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'hover:from-purple-700 hover:to-blue-700 hover:scale-105'
+                }`}
               >
                 {isStaking || loading ? (
                   <span className="flex items-center justify-center">
@@ -188,7 +218,12 @@ export function Governance() {
                     Procesando...
                   </span>
                 ) : (
-                  "Stake ASTR"
+                  <span className="flex items-center justify-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Stakear {stakeAmount} ASTR
+                  </span>
                 )}
               </button>
             </div>

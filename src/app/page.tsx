@@ -7,7 +7,7 @@ import { Proposals } from "@/components/Proposals";
 import { Governance } from "@/components/Governance";
 import { NFTBadges } from "@/components/NFTBadges";
 import { Treasury } from "@/components/Treasury";
-
+const version = process.env.npm_package_version || '1.0.2';
 
 export default function Home() {
   const account = useActiveAccount();
@@ -52,7 +52,7 @@ function Header() {
         <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
           🎭{" "}
           <span className="bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
-            FiestaDAO
+            FiestaDAO <span className="text-white text-sm">v{version}</span>
           </span>
         </h1>
         <p className="text-xl text-purple-200 mb-2">

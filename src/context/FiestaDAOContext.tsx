@@ -2,7 +2,10 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useActiveAccount, useActiveWalletChain, useReadContract, useSendTransaction } from 'thirdweb/react';
-import { prepareContractCall, getContract, readContract } from 'thirdweb';
+import { prepareContractCall, getContract, readContract, createThirdwebClient } from 'thirdweb';
+
+// Import client from thirdweb configuration
+import { client } from '@/lib/thirdweb';
 import { Proposal } from '@/types/proposal.types';
 
 interface FiestaDAOContextType {
@@ -34,8 +37,23 @@ export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) =
   const chain = useActiveWalletChain();
   const { mutate: sendTransaction } = useSendTransaction();
   
-  // Initialize contract with null check and error handling
+  // Initialize contract with thirdweb client
   const [contract, setContract] = useState<any>(null);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_CONTRACT_ADDRESS) {
+      const contractInstance = getContract({
+        client,
+        chain: { 
+          id: 81, 
+          name: 'Shibuya', 
+          rpc: 'https://evm.shibuya.astar.network' 
+        },
+        address: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`,
+      });
+      setContract(contractInstance);
+    }
+  }, []);
   const [contractError, setContractError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -231,8 +249,19 @@ export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) =
         value: amount
       });
       
-      await sendTransaction(tx);
+      // Send the transaction and wait for it to be included in a block
+      console.log('Sending staking transaction...');
+      const result = await sendTransaction(tx);
+      
+      console.log('Transaction submitted, waiting for confirmation...');
+      
+      // Wait for the transaction to be confirmed
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 2 seconds to ensure confirmation
+      
+      // Refresh voting power after confirmation
       await refreshVotingPower();
+      
+      return result;
     } catch (err: any) {
       console.error('Error staking tokens:', err);
       setError(err.message || 'Failed to stake tokens');
@@ -247,15 +276,23 @@ export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) =
     if (!contract || !address) return;
     
     try {
-      // Get voting power using the correct contract method
-      const power = await contract.votingPower(address);
-      setVotingPower(BigInt(power.toString()));
+      // Get voting power using the stakedTokens mapping (which is what votingPower tracks)
+      const stakedTokens = await readContract({
+        contract,
+        method: 'function stakedTokens(address) view returns (uint256)',
+        params: [address]
+      });
+      setVotingPower(BigInt(stakedTokens.toString()));
       
       // Get minimum stake requirement using the correct contract method
-      const minStake = await contract.MIN_STAKE_TO_CREATE_PROPOSAL();
+      const minStake = await readContract({
+        contract,
+        method: 'function MIN_STAKE_TO_CREATE_PROPOSAL() view returns (uint256)'
+      });
       setMinStakeToPropose(BigInt(minStake.toString()));
     } catch (err) {
-      console.error('Error fetching voting power:', err);
+      console.error('Error refreshing voting power:', err);
+      setError('Failed to refresh voting power');
     }
   }, [contract, address]);
   

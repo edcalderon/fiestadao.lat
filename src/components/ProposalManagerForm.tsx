@@ -24,6 +24,8 @@ export default function ProposalManagerForm({ onClose }: ProposalManagerFormProp
   const [description, setDescription] = useState('');
   const [projectId, setProjectId] = useState('1');
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [votingInProgress, setVotingInProgress] = useState<Record<number, boolean>>({});
   
   // Format values for display
   const minStakeFormatted = formatEther(minStakeToPropose || 0n);
@@ -41,15 +43,19 @@ export default function ProposalManagerForm({ onClose }: ProposalManagerFormProp
   };
 
   const handleVote = async (proposalId: number, support: boolean) => {
-    if (loading) return;
+    if (loading || votingInProgress[proposalId]) return;
     
     try {
+      setVotingInProgress(prev => ({ ...prev, [proposalId]: true }));
       setFormError(null);
+      
       await voteOnProposal(proposalId, support);
       await loadProposals(); // Refresh the proposals to show updated vote counts
     } catch (err: any) {
       console.error('Error voting on proposal:', err);
       setFormError(err.message || 'Failed to submit vote');
+    } finally {
+      setVotingInProgress(prev => ({ ...prev, [proposalId]: false }));
     }
   };
   
@@ -62,6 +68,8 @@ export default function ProposalManagerForm({ onClose }: ProposalManagerFormProp
   
   const handleCreateProposal = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isSubmitting) return;
     
     // Validate form
     if (!title.trim()) {
@@ -80,6 +88,7 @@ export default function ProposalManagerForm({ onClose }: ProposalManagerFormProp
     }
     
     setFormError(null);
+    setIsSubmitting(true);
     
     try {
       await createProposal(Number(projectId), title, description);
@@ -90,6 +99,8 @@ export default function ProposalManagerForm({ onClose }: ProposalManagerFormProp
     } catch (err: any) {
       console.error('Error creating proposal:', err);
       setFormError(err.message || 'Failed to create proposal');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -245,17 +256,37 @@ export default function ProposalManagerForm({ onClose }: ProposalManagerFormProp
                 <div className="mt-4 flex space-x-2">
                   <button
                     onClick={() => handleVote(proposal.id, true)}
-                    disabled={loading}
-                    className="px-3 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200 text-sm"
+                    className={`px-3 py-1 ${votingInProgress[proposal.id] ? 'bg-gray-400' : 'bg-green-500 hover:bg-green-600'} text-white rounded transition-colors flex items-center gap-2`}
+                    disabled={loading || votingInProgress[proposal.id]}
                   >
-                    Vote For
+                    {votingInProgress[proposal.id] ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      `Yes (${proposal.yesVotes.toString()})`
+                    )}
                   </button>
                   <button
                     onClick={() => handleVote(proposal.id, false)}
-                    disabled={loading}
-                    className="px-3 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200 text-sm"
+                    className={`px-3 py-1 ${votingInProgress[proposal.id] ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'} text-white rounded transition-colors flex items-center gap-2`}
+                    disabled={loading || votingInProgress[proposal.id]}
                   >
-                    Vote Against
+                    {votingInProgress[proposal.id] ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      `No (${proposal.noVotes.toString()})`
+                    )}
                   </button>
                 </div>
               </div>

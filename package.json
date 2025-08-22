@@ -16,17 +16,21 @@
     "thirdweb": "^5"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@truffle/hdwallet-provider": "^2.1.15",
     "@types/node": "^20",
     "@types/react": "19.1.10",
     "@types/react-dom": "19.1.7",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "15.4.6",
+    "hardhat": "^3.0.1",
     "postcss": "^8",
     "prettier": "^3.6.2",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5",
-    "tempo-devtools": "^2.0.109"
+    "tempo-devtools": "^2.0.109",
+    "truffle": "^5.11.5",
+    "typescript": "^5"
   },
   "pnpm": {
     "overrides": {

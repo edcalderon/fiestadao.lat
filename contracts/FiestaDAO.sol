@@ -4,15 +4,11 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
 contract FiestaDAO is ERC721URIStorage, Ownable, ReentrancyGuard {
-    using Counters for Counters.Counter;
-    
-    Counters.Counter private _tokenIdCounter;
-    Counters.Counter private _proposalIdCounter;
-    Counters.Counter private _projectIdCounter;
+    uint256 private _tokenIdCounter;
+    uint256 private _proposalIdCounter;
+    uint256 private _projectIdCounter;
     
     // Structs
     struct Project {
@@ -62,7 +58,7 @@ contract FiestaDAO is ERC721URIStorage, Ownable, ReentrancyGuard {
     mapping(address => uint256[]) public userNFTs;
     
     uint256 public constant VOTING_DURATION = 7 days;
-    uint256 public constant MIN_STAKE_TO_CREATE_PROPOSAL = 100 * 10**18; // 100 ASTR
+    uint256 public constant MIN_STAKE_TO_CREATE_PROPOSAL = 10 * 10**18; // 10 ASTR
     uint256 public constant MIN_STAKE_TO_VOTE = 1 * 10**18; // 1 ASTR
     
     uint256 public treasuryBalance;
@@ -115,8 +111,8 @@ contract FiestaDAO is ERC721URIStorage, Ownable, ReentrancyGuard {
         require(_beneficiary != address(0), "Invalid beneficiary address");
         require(_requestedAmount > 0, "Requested amount must be greater than 0");
         
-        _projectIdCounter.increment();
-        uint256 projectId = _projectIdCounter.current();
+        _projectIdCounter++;
+        uint256 projectId = _projectIdCounter;
         
         projects[projectId] = Project({
             id: projectId,
@@ -146,8 +142,8 @@ contract FiestaDAO is ERC721URIStorage, Ownable, ReentrancyGuard {
         require(projects[_projectId].isActive, "Project is not active");
         require(bytes(_title).length > 0, "Title cannot be empty");
         
-        _proposalIdCounter.increment();
-        uint256 proposalId = _proposalIdCounter.current();
+        _proposalIdCounter++;
+        uint256 proposalId = _proposalIdCounter;
         
         Proposal storage newProposal = proposals[proposalId];
         newProposal.id = proposalId;
@@ -216,8 +212,8 @@ contract FiestaDAO is ERC721URIStorage, Ownable, ReentrancyGuard {
     
     // NFT Badge functions
     function _mintVotingBadge(address _voter, uint256 _proposalId, bool _voteChoice) internal {
-        _tokenIdCounter.increment();
-        uint256 tokenId = _tokenIdCounter.current();
+        _tokenIdCounter++;
+        uint256 tokenId = _tokenIdCounter;
         
         _safeMint(_voter, tokenId);
         
@@ -259,7 +255,7 @@ contract FiestaDAO is ERC721URIStorage, Ownable, ReentrancyGuard {
         // This would typically generate a proper JSON metadata URI
         // For now, returning a placeholder
         return string(abi.encodePacked(
-            "https://api.fiestadao.com/metadata/",
+            "https://api.fiestadao.lat/metadata/",
             Strings.toString(_tokenId),
             ".json"
         ));
@@ -369,15 +365,15 @@ contract FiestaDAO is ERC721URIStorage, Ownable, ReentrancyGuard {
     }
     
     function getTotalProjects() external view returns (uint256) {
-        return _projectIdCounter.current();
+        return _projectIdCounter;
     }
     
     function getTotalProposals() external view returns (uint256) {
-        return _proposalIdCounter.current();
+        return _proposalIdCounter;
     }
     
     function getTotalNFTs() external view returns (uint256) {
-        return _tokenIdCounter.current();
+        return _tokenIdCounter;
     }
     
     function hasVoted(uint256 _proposalId, address _voter) external view returns (bool) {

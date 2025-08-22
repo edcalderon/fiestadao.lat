@@ -23,9 +23,6 @@ Cada voto genera un **NFT conmemorativo ("Proof of Culture")**, que se convierte
 
 ### Shibuya Testnet
 - **Contract Address**: [0x996c1025cbE7bd3Fb87feb47f94b84521E8Bb0b4](https://shibuya.subscan.io/address/0x996c1025cbE7bd3Fb87feb47f94b84521E8Bb0b4)
-- **Deployment TX**: [0x2cc875ac761621cf035fc40c1cec7a6759196f5b1ab1dca2fb730d8eea1f6dae](https://shibuya.subscan.io/extrinsic/0x2cc875ac761621cf035fc40c1cec7a6759196f5b1ab1dca2fb730d8eea1f6dae)
-- **Network**: Shibuya Testnet (Chain ID: 81)
-- **Explorer**: [View on Subscan](https://shibuya.subscan.io/address/0x996c1025cbE7bd3Fb87feb47f94b84521E8Bb0b4)
 
 ## 🛠️ Tech Stack
 - **Smart Contracts**: Solidity en Shibuya Testnet  

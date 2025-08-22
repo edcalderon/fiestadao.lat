@@ -6,9 +6,9 @@ import { ThirdwebProvider } from "thirdweb/react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "thirdweb SDK + Next starter",
+  title: "FiestaDAO - Cultura en tus manos con Astar",
   description:
-    "Starter template for using thirdweb SDK with Next.js App router",
+    "Plataforma de gobernanza on-chain para la cultura local. Vota con ASTR y recibe NFTs conmemorativos.",
 };
 
 export default function RootLayout({

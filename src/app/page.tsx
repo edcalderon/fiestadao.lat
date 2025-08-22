@@ -1,26 +1,32 @@
 "use client";
 
-import { ConnectButton } from "thirdweb/react";
+import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { client } from "./client";
 import { Governance } from "@/components/Governance";
 import { Proposals } from "@/components/Proposals";
 import { NFTBadges } from "@/components/NFTBadges";
 import { Treasury } from "@/components/Treasury";
+import { AstarIntegration } from "@/components/AstarIntegration";
 
 export default function Home() {
+  const account = useActiveAccount();
   return (
     <main className="min-h-[100vh] bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <div className="container mx-auto px-4 py-8">
         <Header />
 
         <div className="flex justify-center mb-8">
-          <ConnectButton
-            client={client}
-            appMetadata={{
-              name: "FiestaDAO",
-              url: "https://fiestadao.com",
-            }}
-          />
+          {!account ? (
+            <ConnectButton
+              client={client}
+              appMetadata={{
+                name: "FiestaDAO",
+                url: "https://fiestadao.com",
+              }}
+            />
+          ) : (
+            <AstarIntegration />
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

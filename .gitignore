@@ -29,9 +29,15 @@ yarn-error.log*
 .env*.local
 .env
 
+# private keys
+private.json
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+**/tempobook/dynamic/
+**/tempobook/storyboards/

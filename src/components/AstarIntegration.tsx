@@ -1,100 +1,103 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
-interface AstarNetwork {
-  chainId: number;
-  name: string;
-  rpcUrl: string;
-  blockExplorer: string;
-  nativeCurrency: {
-    name: string;
-    symbol: string;
-    decimals: number;
-  };
-}
-
-interface TokenBalance {
-  astr: number;
-  usd: number;
-}
-
-const ASTAR_ZKEVM_TESTNET: AstarNetwork = {
-  chainId: 6038361,
-  name: "Astar zkEVM Testnet",
-  rpcUrl: "https://rpc.startale.com/astar-zkevm-testnet",
-  blockExplorer: "https://astar-zkevm-testnet.blockscout.com",
-  nativeCurrency: {
-    name: "Astar",
-    symbol: "ASTR",
-    decimals: 18,
-  },
-};
+import type { TokenBalance, NetworkStatus } from "@/types/network.types";
+import { 
+  ConnectButton, 
+  useActiveAccount, 
+  useSwitchActiveWalletChain, 
+  useActiveWalletChain, 
+  useWalletBalance 
+} from "thirdweb/react";
+import { client } from "@/app/client";
+import { formatEther } from "viem";
+import { createWallet } from "thirdweb/wallets";
+import { shibuyaTestnet } from "@/config/networks.config";
 
 export function AstarIntegration() {
   const [isConnected, setIsConnected] = useState(false);
   const [balance, setBalance] = useState<TokenBalance>({ astr: 0, usd: 0 });
-  const [networkStatus, setNetworkStatus] = useState<
-    "connected" | "wrong-network" | "disconnected"
-  >("disconnected");
+  const [networkStatus, setNetworkStatus] = useState<NetworkStatus>("disconnected");
   const [isLoading, setIsLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  // Mock data for demonstration
+  const account = useActiveAccount();
+  const activeChain = useActiveWalletChain();
+  const switchChain = useSwitchActiveWalletChain();
+
+  const { 
+    data: walletBalance, 
+    isLoading: isBalanceLoading, 
+    isError: isBalanceError 
+  } = useWalletBalance({
+    chain: shibuyaTestnet,
+    address: account?.address,
+    client,
+  });
+
+  // Update balance and network status
   useEffect(() => {
-    // Simulate connection check
-    const checkConnection = () => {
-      setBalance({ astr: 1250.75, usd: 187.61 });
-      setIsConnected(true);
-      setNetworkStatus("connected");
-    };
+    if (!account) {
+      setIsConnected(false);
+      setNetworkStatus("disconnected");
+      return;
+    }
 
-    checkConnection();
-  }, []);
+    const isCorrectNetwork = activeChain?.id === shibuyaTestnet.id;
+    setNetworkStatus(isCorrectNetwork ? "connected" : "wrong-network");
+    setIsConnected(true);
+
+    if (isCorrectNetwork && walletBalance) {
+      const sbyBalance = parseFloat(formatEther(walletBalance.value));
+      const usdValue = sbyBalance * 0.15; // Example conversion rate
+      
+      setBalance({ 
+        astr: parseFloat(sbyBalance.toFixed(4)),
+        usd: parseFloat(usdValue.toFixed(2))
+      });
+    }
+  }, [account, activeChain, walletBalance]);
 
   const handleConnectWallet = async () => {
-    setIsLoading(true);
-
+    if (isConnected) return;
+    
     try {
-      // Simulate wallet connection
-      setTimeout(() => {
-        setIsConnected(true);
-        setNetworkStatus("connected");
-        setBalance({ astr: 1250.75, usd: 187.61 });
-        setIsLoading(false);
-        alert("¡Wallet conectada exitosamente a Astar zkEVM Testnet!");
-      }, 2000);
+      setIsLoading(true);
+      const wallet = createWallet("io.metamask");
+      await wallet.connect({ client });
+      
+      // Switch to Shibuya network after connection
+      await switchChain(shibuyaTestnet);
     } catch (error) {
-      setIsLoading(false);
+      console.error("Error connecting wallet:", error);
       alert("Error al conectar wallet. Por favor, intenta nuevamente.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSwitchNetwork = async () => {
-    setIsLoading(true);
-
     try {
-      // Simulate network switch
-      setTimeout(() => {
-        setNetworkStatus("connected");
-        setIsLoading(false);
-        alert("¡Red cambiada exitosamente a Astar zkEVM Testnet!");
-      }, 1500);
+      setIsLoading(true);
+      await switchChain(shibuyaTestnet);
+      setNetworkStatus("connected");
     } catch (error) {
-      setIsLoading(false);
+      console.error("Error switching network:", error);
       alert("Error al cambiar de red. Por favor, intenta manualmente.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleGetTestTokens = () => {
-    alert("Redirigiendo al faucet de Astar zkEVM Testnet...");
-    window.open(
-      "https://portal.astar.network/astar-zkevm-testnet/faucet",
-      "_blank",
-    );
+    alert("Redirigiendo al faucet de Shibuya Testnet...");
+    window.open("https://faucet.astar.network/shibuya", "_blank");
   };
 
   const handleViewOnExplorer = () => {
-    window.open(ASTAR_ZKEVM_TESTNET.blockExplorer, "_blank");
+    if (shibuyaTestnet.blockExplorers?.[0]?.url) {
+      window.open(shibuyaTestnet.blockExplorers[0].url, "_blank");
+    }
   };
 
   const getNetworkStatusColor = () => {
@@ -111,7 +114,7 @@ export function AstarIntegration() {
   const getNetworkStatusText = () => {
     switch (networkStatus) {
       case "connected":
-        return "✅ Conectado a Astar zkEVM";
+        return "✅ Conectado a Shibuya";
       case "wrong-network":
         return "⚠️ Red Incorrecta";
       default:
@@ -119,126 +122,188 @@ export function AstarIntegration() {
     }
   };
 
-  return (
-    <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-      <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-        ⭐ Integración Astar
-      </h2>
-
-      {/* Network Status */}
-      <div
-        className={`bg-gradient-to-r ${getNetworkStatusColor()} rounded-lg p-4 mb-6 border border-white/20`}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-white font-semibold">
-              {getNetworkStatusText()}
-            </h3>
-            <p className="text-white/80 text-sm">{ASTAR_ZKEVM_TESTNET.name}</p>
-          </div>
-          {networkStatus === "wrong-network" && (
-            <button
-              onClick={handleSwitchNetwork}
-              disabled={isLoading}
-              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200"
-            >
-              {isLoading ? "⏳ Cambiando..." : "🔄 Cambiar Red"}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Balance Display */}
-      {isConnected && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-purple-600/30 to-blue-600/30 rounded-lg p-4 border border-purple-400/30">
-            <div className="text-purple-200 text-sm mb-1">Balance ASTR</div>
-            <div className="text-2xl font-bold text-white">
-              {balance.astr.toLocaleString()}
-            </div>
-            <div className="text-purple-300 text-sm">
-              ${balance.usd.toFixed(2)} USD
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-600/30 to-emerald-600/30 rounded-lg p-4 border border-green-400/30">
-            <div className="text-green-200 text-sm mb-1">Poder de Voto</div>
-            <div className="text-2xl font-bold text-white">
-              {balance.astr.toFixed(0)}
-            </div>
-            <div className="text-green-300 text-sm">1 ASTR = 1 Voto</div>
-          </div>
+  const renderConnectionSection = () => (
+    <div className="space-y-3">
+      {!isConnected ? (
+        <button
+          onClick={handleConnectWallet}
+          disabled={isLoading}
+          className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 disabled:from-gray-500 disabled:to-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 disabled:scale-100"
+        >
+          {isLoading ? "⏳ Conectando..." : "🔗 Conectar Wallet"}
+        </button>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={handleGetTestTokens}
+            className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
+          >
+            🚰 Obtener ASTR Testnet
+          </button>
+          <button
+            onClick={handleViewOnExplorer}
+            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-white/20"
+          >
+            🔍 Ver en Explorer
+          </button>
         </div>
       )}
+    </div>
+  );
 
-      {/* Connection Actions */}
-      <div className="space-y-3 mb-6">
-        {!isConnected ? (
+  const renderCollapsedContent = () => (
+    <div className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-white font-semibold">
+            {getNetworkStatusText()}
+          </h3>
+          <p className="text-white/80 text-sm">{shibuyaTestnet.name}</p>
+        </div>
+        {networkStatus === "wrong-network" && (
           <button
-            onClick={handleConnectWallet}
+            onClick={handleSwitchNetwork}
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 disabled:from-gray-500 disabled:to-gray-600 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 disabled:scale-100"
+            className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200"
           >
-            {isLoading ? "⏳ Conectando..." : "🔗 Conectar Wallet"}
+            {isLoading ? "⏳ Cambiando..." : "🔄 Cambiar Red"}
           </button>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={handleGetTestTokens}
-              className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
-            >
-              🚰 Obtener ASTR Testnet
-            </button>
-            <button
-              onClick={handleViewOnExplorer}
-              className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-white/20"
-            >
-              🔍 Ver en Explorer
-            </button>
-          </div>
         )}
       </div>
+    </div>
+  );
 
-      {/* Network Information */}
-      <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-        <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-          🌐 Información de Red
-        </h3>
-
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-purple-300">Chain ID:</span>
-            <span className="text-white font-mono">
-              {ASTAR_ZKEVM_TESTNET.chainId}
-            </span>
+  return (
+    <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
+      {/* Collapsed State */}
+      {!isExpanded ? (
+        <div>
+          <div 
+            className="p-4 cursor-pointer hover:bg-white/5 transition-colors flex justify-between items-center"
+            onClick={() => setIsExpanded(true)}
+          >
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              ⭐ Integración Astar
+            </h2>
+            <span className="text-white/60 text-2xl">+</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-purple-300">RPC URL:</span>
-            <span className="text-white font-mono text-xs truncate max-w-48">
-              {ASTAR_ZKEVM_TESTNET.rpcUrl}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-purple-300">Símbolo:</span>
-            <span className="text-white font-semibold">
-              {ASTAR_ZKEVM_TESTNET.nativeCurrency.symbol}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-purple-300">Decimales:</span>
-            <span className="text-white">
-              {ASTAR_ZKEVM_TESTNET.nativeCurrency.decimals}
-            </span>
-          </div>
+          {renderCollapsedContent()}
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Header with expand/collapse button */}
+          <div 
+            className="p-4 cursor-pointer hover:bg-white/5 transition-colors flex justify-between items-center"
+            onClick={() => setIsExpanded(false)}
+          >
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              ⭐ Integración Astar
+            </h2>
+            <span className="text-white/60 text-2xl">−</span>
+          </div>
 
-      <div className="mt-6 p-4 bg-blue-800/30 rounded-lg border border-blue-400/30">
-        <p className="text-blue-200 text-sm text-center">
-          ⚡ <strong>Astar zkEVM:</strong> Red de pruebas optimizada para dApps
-          culturales con bajas comisiones.
-        </p>
-      </div>
+          {/* Expanded content */}
+          <div className="px-6 pb-6">
+            {/* Network Status */}
+            <div
+              className={`bg-gradient-to-r ${getNetworkStatusColor()} rounded-lg p-4 mb-6 border border-white/20`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-white font-semibold">
+                    {getNetworkStatusText()}
+                  </h3>
+                  <ConnectButton
+                    client={client}
+                    appMetadata={{
+                      name: "FiestaDAO",
+                      url: "https://fiestadao.com",
+                    }}
+                  />
+                  <p className="text-white/80 text-sm">{shibuyaTestnet.name}</p>
+                </div>
+                {networkStatus === "wrong-network" && (
+                  <button
+                    onClick={handleSwitchNetwork}
+                    disabled={isLoading}
+                    className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200"
+                  >
+                    {isLoading ? "⏳ Cambiando..." : "🔄 Cambiar Red"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Balance Display */}
+            {isConnected && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-gradient-to-br from-purple-600/30 to-blue-600/30 rounded-lg p-4 border border-purple-400/30">
+                  <div className="text-purple-200 text-sm mb-1">Balance ASTR</div>
+                  <div className="text-2xl font-bold text-white">
+                    {balance.astr.toLocaleString()}
+                  </div>
+                  <div className="text-purple-300 text-sm">
+                    ${balance.usd.toFixed(2)} USD
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-600/30 to-emerald-600/30 rounded-lg p-4 border border-green-400/30">
+                  <div className="text-green-200 text-sm mb-1">Poder de Voto</div>
+                  <div className="text-2xl font-bold text-white">
+                    {balance.astr.toFixed(0)}
+                  </div>
+                  <div className="text-green-300 text-sm">1 ASTR = 1 Voto</div>
+                </div>
+              </div>
+            )}
+
+            {/* Connection Actions */}
+            <div className="space-y-3 mb-6">
+              {renderConnectionSection()}
+            </div>
+
+            {/* Network Information */}
+            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                🌐 Información de Red
+              </h3>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-purple-300">Chain ID:</span>
+                  <span className="text-white font-mono">
+                    {shibuyaTestnet.id}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-purple-300">RPC URL:</span>
+                  <span className="text-white font-mono text-xs truncate max-w-48">
+                    {shibuyaTestnet.rpc}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-purple-300">Símbolo:</span>
+                  <span className="text-white font-semibold">
+                    {shibuyaTestnet.nativeCurrency?.symbol}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-purple-300">Decimales:</span>
+                  <span className="text-white">
+                    {shibuyaTestnet.nativeCurrency?.decimals}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-blue-800/30 rounded-lg border border-blue-400/30">
+              <p className="text-blue-200 text-sm text-center">
+                ⚡ <strong>Shibuya Testnet:</strong> Red de pruebas de Astar Network para desarrollo y pruebas de dApps.
+              </p>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,8 +1,8 @@
 # FiestaDAO 🪅  
 **Cultura en tus manos, vota con ASTR**
 
-FiestaDAO es una plataforma de gobernanza cultural construida sobre **Astar Network (zkEVM)**.  
-Permite que las comunidades y asistentes de festivales voten con el token **ASTR** en decisiones clave, como:  
+FiestaDAO es una plataforma de gobernanza cultural construida sobre **Astar Network (Shibuya Testnet)**.  
+Permite que las comunidades y asistentes de festivales voten con el token **SBY** en decisiones clave, como:  
 - Qué artistas apoyar  
 - Qué escenarios financiar  
 - Qué proyectos comunitarios culturales respaldar  
@@ -20,10 +20,10 @@ Cada voto genera un **NFT conmemorativo ("Proof of Culture")**, que se convierte
 ---
 
 ## 🛠️ Tech Stack
-- **Smart Contracts**: Solidity en Astar zkEVM testnet.  
-- **Frontend**: Thirdweb + Next.js.  
-- **NFTs**: ERC721 + metadata en IPFS.  
-- **Startale Cloud**: hosting de la dApp 
+- **Smart Contracts**: Solidity en Shibuya Testnet  
+- **Frontend**: Thirdweb + Next.js  
+- **NFTs**: ERC721 + metadata en IPFS  
+- **Astar Network**: Despliegue en Shibuya Testnet
 
 ---
 

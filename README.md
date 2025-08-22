@@ -23,7 +23,7 @@ Cada voto genera un **NFT conmemorativo ("Proof of Culture")**, que se convierte
 - **Smart Contracts**: Solidity en Astar zkEVM testnet.  
 - **Frontend**: Thirdweb + Next.js.  
 - **NFTs**: ERC721 + metadata en IPFS.  
-- **Startale Cloud**: hosting de la dApp (si aplica).  
+- **Startale Cloud**: hosting de la dApp 
 
 ---
 

@@ -1,27 +1,37 @@
 "use client";
 
-import thirdwebIcon from "@public/thirdweb.svg";
-import Image from "next/image";
 import { ConnectButton } from "thirdweb/react";
 import { client } from "./client";
+import { Governance } from "@/components/Governance";
+import { Proposals } from "@/components/Proposals";
+import { NFTBadges } from "@/components/NFTBadges";
+import { Treasury } from "@/components/Treasury";
 
 export default function Home() {
   return (
-    <main className="p-4 pb-10 min-h-[100vh] flex items-center justify-center container max-w-screen-lg mx-auto">
-      <div className="py-20">
+    <main className="min-h-[100vh] bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <div className="container mx-auto px-4 py-8">
         <Header />
 
-        <div className="flex justify-center mb-20">
+        <div className="flex justify-center mb-8">
           <ConnectButton
             client={client}
             appMetadata={{
-              name: "Example App",
-              url: "https://example.com",
+              name: "FiestaDAO",
+              url: "https://fiestadao.com",
             }}
           />
         </div>
 
-        <ThirdwebResources />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <Proposals />
+          <Governance />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <NFTBadges />
+          <Treasury />
+        </div>
       </div>
     </main>
   );
@@ -29,72 +39,22 @@ export default function Home() {
 
 function Header() {
   return (
-    <header className="flex flex-col items-center mb-20 md:mb-20">
-      <Image
-        src={thirdwebIcon}
-        alt=""
-        className="size-[150px] md:size-[150px]"
-        style={{
-          filter: "drop-shadow(0px 0px 24px #a726a9a8)",
-        }}
-      />
-
-      <h1 className="text-2xl md:text-6xl font-semibold md:font-bold tracking-tighter mb-6 text-zinc-100">
-        thirdweb SDK
-        <span className="text-zinc-300 inline-block mx-1"> + </span>
-        <span className="inline-block -skew-x-6 text-blue-500"> Next.js </span>
-      </h1>
-
-      <p className="text-zinc-300 text-base">
-        Read the{" "}
-        <code className="bg-zinc-800 text-zinc-300 px-2 rounded py-1 text-sm mx-1">
-          README.md
-        </code>{" "}
-        file to get started.
-      </p>
+    <header className="text-center mb-12">
+      <div className="mb-6">
+        <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
+          🎭{" "}
+          <span className="bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+            FiestaDAO
+          </span>
+        </h1>
+        <p className="text-xl text-purple-200 mb-2">
+          Cultura en tus manos con Astar
+        </p>
+        <p className="text-purple-300 max-w-2xl mx-auto">
+          Plataforma de gobernanza on-chain para la cultura local. Vota con ASTR
+          en decisiones clave y recibe NFTs conmemorativos.
+        </p>
+      </div>
     </header>
-  );
-}
-
-function ThirdwebResources() {
-  return (
-    <div className="grid gap-4 lg:grid-cols-3 justify-center">
-      <ArticleCard
-        title="thirdweb SDK Docs"
-        href="https://portal.thirdweb.com/typescript/v5"
-        description="thirdweb TypeScript SDK documentation"
-      />
-
-      <ArticleCard
-        title="Components and Hooks"
-        href="https://portal.thirdweb.com/typescript/v5/react"
-        description="Learn about the thirdweb React components and hooks in thirdweb SDK"
-      />
-
-      <ArticleCard
-        title="thirdweb Dashboard"
-        href="https://thirdweb.com/dashboard"
-        description="Deploy, configure, and manage your smart contracts from the dashboard."
-      />
-    </div>
-  );
-}
-
-function ArticleCard(props: {
-  title: string;
-  href: string;
-  description: string;
-}) {
-  return (
-    <a
-      href={props.href + "?utm_source=next-template"}
-      target="_blank"
-      className="flex flex-col border border-zinc-800 p-4 rounded-lg hover:bg-zinc-900 transition-colors hover:border-zinc-700"
-    >
-      <article>
-        <h2 className="text-lg font-semibold mb-2">{props.title}</h2>
-        <p className="text-sm text-zinc-400">{props.description}</p>
-      </article>
-    </a>
   );
 }

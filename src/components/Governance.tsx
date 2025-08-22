@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProposalManagerForm from "./ProposalManagerForm";
+import { useFiestaDAO } from "@/context/FiestaDAOContext";
+import { formatEther, parseEther } from "ethers";
 
 interface StakeInfo {
   stakedAmount: number;
@@ -10,59 +12,86 @@ interface StakeInfo {
 }
 
 export function Governance() {
-  const [stakeAmount, setStakeAmount] = useState<string>("");
-  const [userStake, setUserStake] = useState<StakeInfo>({
-    stakedAmount: 500,
-    votingPower: 500,
-    rewards: 12.5,
-  });
+  const { 
+    stakeTokens, 
+    votingPower, 
+    minStakeToPropose, 
+    loading, 
+    isConnected,
+    refreshVotingPower
+  } = useFiestaDAO();
+  
+  const [stakeAmount, setStakeAmount] = useState<string>("10"); // Default to 10 ASTR
   const [isStaking, setIsStaking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  
+  // Format values for display
+  const minStakeFormatted = formatEther(minStakeToPropose || 0n);
+  const userStakeFormatted = formatEther(votingPower || 0n);
+  const hasEnoughStake = (votingPower || 0n) >= (minStakeToPropose || 0n);
 
   const handleStake = async () => {
-    if (!stakeAmount || parseFloat(stakeAmount) <= 0) return;
-
-    setIsStaking(true);
-    // Simulate staking transaction
-    setTimeout(() => {
-      const amount = parseFloat(stakeAmount);
-      setUserStake((prev) => ({
-        stakedAmount: prev.stakedAmount + amount,
-        votingPower: prev.votingPower + amount,
-        rewards: prev.rewards + amount * 0.025,
-      }));
-      setStakeAmount("");
+    if (!isConnected) {
+      setError("Please connect your wallet to stake tokens");
+      return;
+    }
+    
+    if (!stakeAmount || parseFloat(stakeAmount) <= 0) {
+      setError("Please enter a valid amount to stake");
+      return;
+    }
+    
+    try {
+      setIsStaking(true);
+      setError(null);
+      setSuccess(null);
+      
+      // Convert the amount to wei (18 decimals)
+      const amountInWei = parseEther(stakeAmount);
+      
+      // Call the stakeTokens function from the context
+      await stakeTokens(amountInWei);
+      
+      // Refresh the voting power display
+      await refreshVotingPower();
+      
+      // Save the staked amount for the success message
+      const stakedAmount = stakeAmount;
+      setStakeAmount("10"); // Reset to default 10 ASTR
+      // Show success message with the actual staked amount
+      setSuccess(`¡${stakedAmount} ASTR stakeados exitosamente! Tu poder de voto ha aumentado.`);
+    } catch (err: any) {
+      console.error('Error staking tokens:', err);
+      if (err.message?.includes('insufficient funds') || err.message?.includes('InsufficientBalance')) {
+        setError(`Fondos insuficientes. No tienes suficientes ASTR en tu billetera para stakear ${stakeAmount} ASTR.`);
+      } else {
+        setError(err.message || 'Error al hacer stake de tokens. Por favor, inténtalo de nuevo.');
+      }
+    } finally {
       setIsStaking(false);
-      alert(
-        `¡${amount} ASTR stakeados exitosamente! Tu poder de voto ha aumentado.`,
-      );
-    }, 2000);
+    }
   };
 
+  // For now, we'll keep the unstake function as a placeholder
+  // since it requires a more complex implementation with timelocks
   const handleUnstake = async () => {
-    if (userStake.stakedAmount <= 0) return;
-
-    setIsStaking(true);
-    // Simulate unstaking transaction
-    setTimeout(() => {
-      alert(
-        `¡${userStake.stakedAmount} ASTR desbloqueados! Recibirás tus tokens en 7 días.`,
-      );
-      setUserStake({
-        stakedAmount: 0,
-        votingPower: 0,
-        rewards: 0,
-      });
-      setIsStaking(false);
-    }, 2000);
+    alert("La función de desbloqueo de tokens estará disponible pronto. Actualmente, los tokens se bloquean durante 7 días después del desbloqueo.");
   };
 
   const [showProposalModal, setShowProposalModal] = useState(false);
 
   const handleCreateProposal = () => {
-    if (userStake.votingPower < 100) {
-      alert("Necesitas al menos 100 ASTR stakeados para crear una propuesta.");
+    if (!isConnected) {
+      setError("Please connect your wallet to create a proposal");
       return;
     }
+    
+    if (!hasEnoughStake) {
+      setError(`Necesitas al menos ${minStakeFormatted} ASTR stakeados para crear una propuesta.`);
+      return;
+    }
+    
     setShowProposalModal(true);
   };
 
@@ -77,19 +106,19 @@ export function Governance() {
         <div className="bg-gradient-to-br from-purple-600/30 to-blue-600/30 rounded-lg p-4 border border-purple-400/30">
           <div className="text-purple-200 text-sm mb-1">ASTR Stakeados</div>
           <div className="text-2xl font-bold text-white">
-            {userStake.stakedAmount}
+            {parseFloat(userStakeFormatted).toFixed(2)}
           </div>
         </div>
         <div className="bg-gradient-to-br from-green-600/30 to-emerald-600/30 rounded-lg p-4 border border-green-400/30">
           <div className="text-green-200 text-sm mb-1">Poder de Voto</div>
           <div className="text-2xl font-bold text-white">
-            {userStake.votingPower}
+            {parseFloat(userStakeFormatted).toFixed(2)}
           </div>
         </div>
         <div className="bg-gradient-to-br from-yellow-600/30 to-orange-600/30 rounded-lg p-4 border border-yellow-400/30">
-          <div className="text-yellow-200 text-sm mb-1">Recompensas</div>
+          <div className="text-yellow-200 text-sm mb-1">Mínimo para Proponer</div>
           <div className="text-2xl font-bold text-white">
-            {userStake.rewards.toFixed(2)}
+            {parseFloat(minStakeFormatted).toFixed(2)} ASTR
           </div>
         </div>
       </div>
@@ -100,59 +129,114 @@ export function Governance() {
           🔒 Stake ASTR para Votar
         </h3>
 
-        <div className="flex gap-3 mb-4">
-          <input
-            type="number"
-            value={stakeAmount}
-            onChange={(e) => setStakeAmount(e.target.value)}
-            placeholder="Cantidad de ASTR"
-            className="flex-1 bg-purple-800/30 text-white px-3 py-2 rounded-lg border border-purple-400/30 placeholder-purple-300"
-            disabled={isStaking}
-          />
-          <button
-            onClick={handleStake}
-            disabled={isStaking || !stakeAmount}
-            className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 disabled:from-gray-500 disabled:to-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 disabled:scale-100"
-          >
-            {isStaking ? "⏳ Procesando..." : "🔒 Stake"}
-          </button>
-        </div>
+        {!isConnected ? (
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded">
+            <p className="font-bold">Wallet no conectada</p>
+            <p>Conecta tu billetera para comenzar a hacer staking de ASTR.</p>
+          </div>
+        ) : (
+          <>
+            {error && (
+              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
+                <p className="font-bold">Error</p>
+                <p>{error}</p>
+              </div>
+            )}
+            {success && (
+              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded">
+                <p className="font-bold">¡Éxito!</p>
+                <p>{success}</p>
+              </div>
+            )}
+            
+            <div className="mb-4">
+              <label htmlFor="stake-amount" className="block text-sm font-medium text-white mb-1">
+                Cantidad de ASTR a stakear
+              </label>
+              <div className="relative rounded-md shadow-sm">
+                <input
+                  type="number"
+                  id="stake-amount"
+                  value={stakeAmount}
+                  onChange={(e) => setStakeAmount(e.target.value)}
+                  min="10"
+                  step="0.1"
+                  className="block w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="10"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <span className="text-white sm:text-sm">ASTR</span>
+                </div>
+              </div>
+              <p className="mt-1 text-xs text-white/60">
+                Mínimo recomendado: 10 ASTR
+              </p>
+            </div>
+            
+            <div className="flex space-x-2">
+              <button
+                onClick={handleStake}
+                disabled={isStaking || loading}
+                className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
+              >
+                {isStaking || loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Procesando...
+                  </span>
+                ) : (
+                  "Stake ASTR"
+                )}
+              </button>
+            </div>
+          </>
+        )}
 
         <div className="text-purple-200 text-sm mb-4">
           💡 <strong>Ratio:</strong> 1 ASTR = 1 voto | <strong>APY:</strong> ~5%
           en recompensas
         </div>
 
-        {userStake.stakedAmount > 0 && (
+        {votingPower > 0 && (
           <button
-            onClick={handleUnstake}
-            disabled={isStaking}
-            className="w-full bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 disabled:from-gray-500 disabled:to-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200"
-          >
-            {isStaking
-              ? "⏳ Procesando..."
-              : "🔓 Unstake Todo (7 días de espera)"}
-          </button>
+          onClick={handleUnstake}
+          disabled={!isConnected || (votingPower || 0n) <= 0n}
+          className="w-full bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:transform-none mt-4"
+        >
+          🔓 Unstake Todo (7 días de espera)
+        </button>
         )}
       </div>
 
       {/* Governance Actions */}
-      <div className="space-y-3">
+      <div className="space-y-3 mt-6">
+        <h3 className="text-white font-semibold mb-2">Acciones de Gobernanza</h3>
         <button
           onClick={handleCreateProposal}
-          className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-2"
+          disabled={!isConnected || !hasEnoughStake}
+          className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center justify-center space-x-2"
         >
-          📝 Crear Nueva Propuesta
+          <span>🗳️</span>
+          <span>Crear Propuesta ({parseFloat(minStakeFormatted)} ASTR mínimo)</span>
         </button>
+        
+        {!hasEnoughStake && isConnected && (
+          <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-3 rounded text-sm">
+            <p>Necesitas al menos {parseFloat(minStakeFormatted)} ASTR stakeados para crear una propuesta.</p>
+          </div>
+        )}
+      </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <button className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-white/20">
-            📊 Historial de Votos
-          </button>
-          <button className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-white/20">
-            🏆 Ranking DAO
-          </button>
-        </div>
+      <div className="grid grid-cols-2 gap-3 mt-4">
+        <button className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-white/20">
+          📊 Historial de Votos
+        </button>
+        <button className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 border border-white/20">
+          🏆 Ranking DAO
+        </button>
       </div>
 
       <div className="mt-6 p-4 bg-blue-800/30 rounded-lg border border-blue-400/30">

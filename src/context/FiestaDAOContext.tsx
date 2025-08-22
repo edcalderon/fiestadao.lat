@@ -9,11 +9,15 @@ interface FiestaDAOContextType {
   contract: any;
   isConnected: boolean;
   address: string | undefined;
+  votingPower: bigint;
+  minStakeToPropose: bigint;
   createProposal: (projectId: number, title: string, description: string) => Promise<void>;
   getActiveProposals: () => Promise<any[]>;
   voteOnProposal: (proposalId: number, support: boolean) => Promise<void>;
+  stakeTokens: (amount: bigint) => Promise<void>;
   loading: boolean;
   error: string | null;
+  refreshVotingPower: () => Promise<void>;
 }
 
 const FiestaDAOContext = createContext<FiestaDAOContextType | undefined>(undefined);
@@ -21,6 +25,8 @@ const FiestaDAOContext = createContext<FiestaDAOContextType | undefined>(undefin
 export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [votingPower, setVotingPower] = useState<bigint>(0n);
+  const [minStakeToPropose, setMinStakeToPropose] = useState<bigint>(10n * 10n**18n); // Default 10 ASTR
   
   const account = useActiveAccount();
   const address = account?.address;
@@ -205,17 +211,78 @@ export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) =
     }
   };
 
+  // Stake tokens function
+  const stakeTokens = async (amount: bigint) => {
+    if (!contract) {
+      throw new Error('Contract not initialized');
+    }
+    
+    if (amount <= 0n) {
+      throw new Error('Amount must be greater than 0');
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const tx = prepareContractCall({
+        contract,
+        method: 'function stakeTokens()',
+        value: amount
+      });
+      
+      await sendTransaction(tx);
+      await refreshVotingPower();
+    } catch (err: any) {
+      console.error('Error staking tokens:', err);
+      setError(err.message || 'Failed to stake tokens');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to refresh user's voting power
+  const refreshVotingPower = useCallback(async () => {
+    if (!contract || !address) return;
+    
+    try {
+      // Get voting power using the correct contract method
+      const power = await contract.votingPower(address);
+      setVotingPower(BigInt(power.toString()));
+      
+      // Get minimum stake requirement using the correct contract method
+      const minStake = await contract.MIN_STAKE_TO_CREATE_PROPOSAL();
+      setMinStakeToPropose(BigInt(minStake.toString()));
+    } catch (err) {
+      console.error('Error fetching voting power:', err);
+    }
+  }, [contract, address]);
+  
+  // Load voting power when contract or address changes
+  useEffect(() => {
+    if (contract && address) {
+      refreshVotingPower();
+    }
+  }, [contract, address, refreshVotingPower]);
+
   return (
-    <FiestaDAOContext.Provider value={{
-      contract,
-      isConnected,
-      address,
-      createProposal,
-      getActiveProposals,
-      voteOnProposal,
-      loading,
-      error: error || contractError,
-    }}>
+    <FiestaDAOContext.Provider 
+      value={{ 
+        contract, 
+        isConnected, 
+        address,
+        votingPower,
+        minStakeToPropose,
+        createProposal,
+        getActiveProposals,
+        voteOnProposal,
+        stakeTokens,
+        loading,
+        error,
+        refreshVotingPower
+      }}
+    >
       {children}
     </FiestaDAOContext.Provider>
   );

@@ -4,7 +4,8 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
 contract FiestaDAO is ERC721URIStorage, Ownable, ReentrancyGuard {
     uint256 private _tokenIdCounter;
     uint256 private _proposalIdCounter;
@@ -73,7 +74,7 @@ contract FiestaDAO is ERC721URIStorage, Ownable, ReentrancyGuard {
     event TokensUnstaked(address indexed user, uint256 amount);
     event FundsAllocated(uint256 indexed projectId, uint256 amount);
     
-    constructor() ERC721("FiestaDAO Proof of Culture", "FDPOC") {}
+    constructor() ERC721("FiestaDAO Proof of Culture", "FDPOC") Ownable(msg.sender) {}
     
     // Staking functions
     function stakeTokens() external payable {

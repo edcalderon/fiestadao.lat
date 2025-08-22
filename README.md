@@ -30,5 +30,5 @@ Cada voto genera un **NFT conmemorativo ("Proof of Culture")**, que se convierte
 ## 📦 Instalación y uso
 1. Clona el repositorio  
 ```bash
-git clone https://github.com/edcalderon/fiesta-dao.git
-cd fiesta-dao
+git clone https://github.com/edcalderon/fiestadao.git
+cd fiestadao

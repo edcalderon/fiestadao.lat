@@ -2,16 +2,20 @@
 
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { client } from "./client";
-import { Governance } from "@/components/Governance";
+import { FiestaDAOProvider } from "@/context/FiestaDAOContext";
+import { AstarIntegration } from "@/components/AstarIntegration";
+import ProposalManager from "@/components/ProposalManager";
 import { Proposals } from "@/components/Proposals";
+import { Governance } from "@/components/Governance";
 import { NFTBadges } from "@/components/NFTBadges";
 import { Treasury } from "@/components/Treasury";
-import { AstarIntegration } from "@/components/AstarIntegration";
+
 
 export default function Home() {
   const account = useActiveAccount();
+  
   return (
-    <main className="min-h-[100vh] bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <main className="min-h-[100vh] bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white">
       <div className="container mx-auto px-4 py-8">
         <Header />
 
@@ -28,6 +32,15 @@ export default function Home() {
             <AstarIntegration />
           )}
         </div>
+        
+        {account && (
+          <FiestaDAOProvider>
+            <div className="max-w-4xl mx-auto bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl p-6 mt-8">
+              <h1 className="text-3xl font-bold mb-6 text-center">FiestaDAO Governance</h1>
+              <ProposalManager />
+            </div>
+          </FiestaDAOProvider>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <Proposals />

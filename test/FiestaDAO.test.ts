@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Signer } from "ethers";
+import { FiestaDAO } from "../typechain-types";
 
 declare module "ethers" {
   interface ContractFactory {
@@ -8,15 +9,9 @@ declare module "ethers" {
   }
 }
 
-declare module "mocha" {
-  interface Context {
-    timeout: number;
-  }
-}
-
 describe("FiestaDAO", function () {
   let FiestaDAO: any;
-  let fiestaDAO: any;
+  let fiestaDAO: FiestaDAO;
   let owner: Signer;
   let addr1: Signer;
   let addr2: Signer;

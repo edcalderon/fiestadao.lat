@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useFiestaDAO } from '../context/FiestaDAOContext';
 
-export default function ProposalManager() {
+interface ProposalManagerFormProps {
+  onClose: () => void;
+}
+
+export default function ProposalManagerForm({ onClose }: ProposalManagerFormProps) {
   const { 
     createProposal, 
     getActiveProposals, 
@@ -40,6 +44,7 @@ export default function ProposalManager() {
       setTitle('');
       setDescription('');
       await loadProposals();
+      onClose(); // Close the modal after successful proposal creation
     } catch (err) {
       console.error('Error creating proposal:', err);
     }

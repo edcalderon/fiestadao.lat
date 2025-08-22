@@ -5,9 +5,16 @@ import * as dotenv from 'dotenv';
 import "@typechain/hardhat";
 import "@nomicfoundation/hardhat-ethers";
 
+
 dotenv.config();
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
+
+const shibuyaNetwork = {
+  url: 'https://evm.shibuya.astar.network',
+  chainId: 81,
+  accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
+} as const;
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -19,25 +26,21 @@ const config: HardhatUserConfig = {
       },
     },
   },
-  defaultNetwork: "shibuya",
   networks: {
     hardhat: {
       chainId: 31337,
+      type: 'edr-simulated',
     },
     shibuya: {
-      url: 'https://evm.shibuya.astar.network',
-      chainId: 81,
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-    },
+      ...shibuyaNetwork,
+      type: 'http',
+    } as any,
   },
   paths: {
     sources: "./contracts",
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts"
-  },
-  mocha: {
-    timeout: 40000
   },
   etherscan: {
     apiKey: {

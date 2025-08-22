@@ -4,7 +4,7 @@ import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { client } from "./client";
 import { FiestaDAOProvider } from "@/context/FiestaDAOContext";
 import { AstarIntegration } from "@/components/AstarIntegration";
-import ProposalManager from "@/components/ProposalManager";
+import ProposalManager from "@/components/ProposalManagerForm";
 import { Proposals } from "@/components/Proposals";
 import { Governance } from "@/components/Governance";
 import { NFTBadges } from "@/components/NFTBadges";
@@ -33,15 +33,6 @@ export default function Home() {
           )}
         </div>
         
-        {account && (
-          <FiestaDAOProvider>
-            <div className="max-w-4xl mx-auto bg-gray-800 bg-opacity-50 backdrop-blur-sm rounded-xl p-6 mt-8">
-              <h1 className="text-3xl font-bold mb-6 text-center">FiestaDAO Governance</h1>
-              <ProposalManager />
-            </div>
-          </FiestaDAOProvider>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <Proposals />
           <Governance />

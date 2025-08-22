@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ProposalManagerForm from "./ProposalManagerForm";
 
 interface StakeInfo {
   stakedAmount: number;
@@ -55,12 +56,14 @@ export function Governance() {
     }, 2000);
   };
 
+  const [showProposalModal, setShowProposalModal] = useState(false);
+
   const handleCreateProposal = () => {
     if (userStake.votingPower < 100) {
       alert("Necesitas al menos 100 ASTR stakeados para crear una propuesta.");
       return;
     }
-    alert("Funcionalidad de creación de propuestas próximamente...");
+    setShowProposalModal(true);
   };
 
   return (
@@ -158,6 +161,26 @@ export function Governance() {
           automáticas basadas en IA.
         </p>
       </div>
+
+      {/* Proposal Modal */}
+      {showProposalModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-white">Crear Nueva Propuesta</h3>
+              <button 
+                onClick={() => setShowProposalModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-4">
+              <ProposalManagerForm onClose={() => setShowProposalModal(false)} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

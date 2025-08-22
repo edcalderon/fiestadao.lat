@@ -1,5 +1,4 @@
-import { ethers } from "hardhat";
-import * as fs from 'fs';
+const { ethers } = require('hardhat');
 
 async function main() {
   console.log("Deploying FiestaDAO contract...");
@@ -12,7 +11,7 @@ async function main() {
     // Get the contract factory
     const FiestaDAO = await ethers.getContractFactory("FiestaDAO");
     
-    // Deploy the contract
+    // Deploy the contracts
     console.log("Deploying FiestaDAO...");
     const fiestaDAO = await FiestaDAO.deploy();
     await fiestaDAO.waitForDeployment();

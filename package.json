@@ -13,7 +13,6 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0",
     "@tanstack/react-query": "^5.85.5",
-    "@thirdweb-dev/react": "^4.9.4",
     "eslint": "^8.0.0",
     "eslint-config-next": "^14.0.0",
     "ethers": "^6.15.0",
@@ -28,7 +27,8 @@
     "truffle": "^5.11.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2",
-    "viem": "^2.34.0"
+    "viem": "^2.34.0",
+    "@thirdweb/react": "^4.9.4"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
@@ -59,7 +59,9 @@
     "prettier": "^3.6.2",
     "solidity-coverage": "^0.8.16",
     "tailwindcss": "^4.1.12",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "viem": "^2.34.0",
+    "@thirdweb/react": "^4.9.4"
   },
   "engines": {
     "node": "22.18.0"

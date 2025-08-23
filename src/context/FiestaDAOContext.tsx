@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { useActiveAccount, useActiveWalletChain, useReadContract, useSendTransaction } from 'thirdweb/react';
+import { useActiveAccount, useActiveWalletChain, useReadContract, useSendTransaction } from '@thirdweb/react';
 import { prepareContractCall, getContract, readContract, createThirdwebClient } from 'thirdweb';
 
 // Import client from thirdweb configuration

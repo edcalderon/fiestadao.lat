@@ -13,13 +13,22 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0",
     "@tanstack/react-query": "^5.85.5",
+    "@thirdweb-dev/react": "^4.9.4",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
     "ethers": "^6.15.0",
+    "hardhat": "^2.19.4",
+    "hardhat-deploy": "^0.11.34",
+    "hardhat-gas-reporter": "^1.0.9",
     "next": "15.4.6",
     "react": "19.1.1",
     "react-dom": "19.1.1",
+    "solidity-coverage": "^0.8.16",
     "thirdweb": "^5",
-    "viem": "^2.34.0",
-    "tailwindcss": "^4.1.12"
+    "truffle": "^5.11.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2",
+    "viem": "^2.34.0"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
@@ -38,7 +47,7 @@
     "@types/react-dom": "^18.2.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "autoprefixer": "^10.4.0",
+    "autoprefixer": "^10.4.21",
     "chai": "^4.3.7",
     "dotenv": "^16.3.1",
     "eslint": "^8.0.0",
@@ -46,12 +55,10 @@
     "hardhat": "^2.19.4",
     "hardhat-deploy": "^0.11.34",
     "hardhat-gas-reporter": "^1.0.9",
-    "postcss": "^8",
+    "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "solidity-coverage": "^0.8.16",
-    "tempo-devtools": "^2.0.109",
-    "truffle": "^5.11.5",
-    "ts-node": "^10.9.2",
+    "tailwindcss": "^4.1.12",
     "typescript": "^5.9.2"
   },
   "engines": {

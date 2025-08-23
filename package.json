@@ -27,8 +27,7 @@
     "truffle": "^5.11.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2",
-    "viem": "^2.34.0",
-    "@thirdweb/react": "^4.9.4"
+    "tailwindcss": "^4.1.12"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
@@ -60,8 +59,7 @@
     "solidity-coverage": "^0.8.16",
     "tailwindcss": "^4.1.12",
     "typescript": "^5.9.2",
-    "viem": "^2.34.0",
-    "@thirdweb/react": "^4.9.4"
+    "viem": "^2.34.0"
   },
   "engines": {
     "node": "22.18.0"

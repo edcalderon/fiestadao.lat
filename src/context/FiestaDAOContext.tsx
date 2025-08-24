@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { useActiveAccount, useActiveWallet, useReadContract, useSendTransaction } from 'thirdweb/react';
-import { prepareContractCall, getContract, readContract, createThirdwebClient } from 'thirdweb';
+import { useActiveAccount, useActiveWalletChain, useReadContract, useSendTransaction } from 'thirdweb/react';
+import { prepareContractCall, getContract } from 'thirdweb';
 
 // Import client from thirdweb configuration
 import { client } from '@/lib/thirdweb';
@@ -39,6 +39,7 @@ export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) =
   
   // Initialize contract with thirdweb client
   const [contract, setContract] = useState<any>(null);
+  
   
   useEffect(() => {
     if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_CONTRACT_ADDRESS) {
@@ -129,11 +130,14 @@ export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) =
 
     const fetchTotalProposals = async () => {
       try {
-        const result = await readContract({
+        const { data, isLoading } = await useReadContract({
           contract,
-          method: "function getTotalProposals() view returns (uint256)",
+          method: "function getTotalProposals() view returns (uint256)"
         });
-        setTotalProposals(result as bigint);
+        
+        if (data) {
+          setTotalProposals(BigInt(data.toString()));
+        }
       } catch (err) {
         console.error('Error fetching total proposals:', err);
         setError('Failed to fetch total proposals');
@@ -157,7 +161,7 @@ export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) =
       for (let i = 1; i <= total; i++) {
         try {
           type RawProposal = [bigint, bigint, string, string, bigint, bigint, bigint, boolean, boolean];
-          const response = await readContract({
+          const response = await useReadContract({
             contract,
             method: "function getProposal(uint256) view returns (tuple(uint256,uint256,string,string,uint256,uint256,uint256,bool,bool))",
             params: [BigInt(i)]
@@ -277,19 +281,25 @@ export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) =
     
     try {
       // Get voting power using the stakedTokens mapping (which is what votingPower tracks)
-      const stakedTokens = await readContract({
+      const { data: stakedTokens } = useReadContract({
         contract,
         method: 'function stakedTokens(address) view returns (uint256)',
         params: [address]
       });
-      setVotingPower(BigInt(stakedTokens.toString()));
+      
+      if (stakedTokens) {
+        setVotingPower(BigInt(stakedTokens.toString()));
+      }
       
       // Get minimum stake requirement using the correct contract method
-      const minStake = await readContract({
+      const { data: minStake } = useReadContract({
         contract,
         method: 'function MIN_STAKE_TO_CREATE_PROPOSAL() view returns (uint256)'
       });
-      setMinStakeToPropose(BigInt(minStake.toString()));
+      
+      if (minStake) {
+        setMinStakeToPropose(BigInt(minStake.toString()));
+      }
     } catch (err) {
       console.error('Error refreshing voting power:', err);
       setError('Failed to refresh voting power');

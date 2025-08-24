@@ -4,7 +4,11 @@ import "./globals.css";
 import { ThirdwebProvider } from "thirdweb/react";
 import { FiestaDAOProvider } from "@/context/FiestaDAOContext";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
   title: "FiestaDAO - Cultura en tus manos con Astar",
@@ -28,8 +32,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className="dark">
+      <body className={`${inter.variable} font-sans antialiased`}>
         <ThirdwebProvider>
           <FiestaDAOProvider>
             {children}

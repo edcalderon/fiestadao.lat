@@ -2,26 +2,10 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useActiveAccount, useActiveWalletChain, useReadContract, useSendTransaction } from 'thirdweb/react';
-import { prepareContractCall, getContract } from 'thirdweb';
-
-// Import client from thirdweb configuration
-import { client } from '@/lib/thirdweb';
+import { prepareContractCall, getContract, getRpcClient } from 'thirdweb';
+import { client } from '@/app/client';
 import { Proposal } from '@/types/proposal.types';
-
-interface FiestaDAOContextType {
-  contract: any;
-  isConnected: boolean;
-  address: string | undefined;
-  votingPower: bigint;
-  minStakeToPropose: bigint;
-  createProposal: (projectId: number, title: string, description: string) => Promise<void>;
-  getActiveProposals: () => Promise<any[]>;
-  voteOnProposal: (proposalId: number, support: boolean) => Promise<void>;
-  stakeTokens: (amount: bigint) => Promise<void>;
-  loading: boolean;
-  error: string | null;
-  refreshVotingPower: () => Promise<void>;
-}
+import { FiestaDAOContextType } from '@/types/context.types';
 
 const FiestaDAOContext = createContext<FiestaDAOContextType | undefined>(undefined);
 
@@ -30,6 +14,9 @@ export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) =
   const [error, setError] = useState<string | null>(null);
   const [votingPower, setVotingPower] = useState<bigint>(0n);
   const [minStakeToPropose, setMinStakeToPropose] = useState<bigint>(10n * 10n**18n); // Default 10 ASTR
+  const [totalProposals, setTotalProposals] = useState<bigint>(0n);
+  const [activeProposals, setActiveProposals] = useState<any[]>([]);
+  const [isLoadingProposals, setIsLoadingProposals] = useState(false);
   
   const account = useActiveAccount();
   const address = account?.address;
@@ -37,40 +24,24 @@ export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) =
   const chain = useActiveWalletChain();
   const { mutate: sendTransaction } = useSendTransaction();
   
-  // Initialize contract with thirdweb client
   const [contract, setContract] = useState<any>(null);
-  
-  
-  useEffect(() => {
-    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_CONTRACT_ADDRESS) {
-      const contractInstance = getContract({
-        client,
-        chain: { 
-          id: 81, 
-          name: 'Shibuya', 
-          rpc: 'https://evm.shibuya.astar.network' 
-        },
-        address: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as `0x${string}`,
-      });
-      setContract(contractInstance);
-    }
-  }, []);
   const [contractError, setContractError] = useState<string | null>(null);
 
+  // Initialize contract with thirdweb client
   useEffect(() => {
-    const initContract = () => {
+    const initContract = async () => {
       try {
         if (!chain) {
           setContractError('No active chain detected');
           return null;
         }
         
-        const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
-        
-        if (!contractAddress) {
-          setContractError('Contract address is not configured');
+        if (typeof window === 'undefined' || !process.env.NEXT_PUBLIC_CONTRACT_ADDRESS) {
+          setContractError('Contract address not configured');
           return null;
         }
+        
+        const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
         
         if (!/^0x[a-fA-F0-9]{40}$/.test(contractAddress)) {
           setContractError('Invalid contract address format');
@@ -78,16 +49,20 @@ export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) =
         }
         
         const contractInstance = getContract({
-          client: { clientId: "", secretKey: "" },
-          chain: chain,
-          address: contractAddress,
+          client,
+          chain: {
+            id: 81,
+            name: 'Shibuya',
+            rpc: 'https://evm.shibuya.astar.network'
+          },
+          address: contractAddress as `0x${string}`,
         });
         
         setContract(contractInstance);
         setContractError(null);
         return contractInstance;
-      } catch (error) {
-        console.error('Error initializing contract:', error);
+      } catch (err) {
+        console.error('Error initializing contract:', err);
         setContractError('Failed to initialize contract');
         return null;
       }
@@ -120,31 +95,21 @@ export const FiestaDAOProvider = ({ children }: { children: React.ReactNode }) =
     }
   };
 
-  const [totalProposals, setTotalProposals] = useState<bigint>(0n);
-  const [activeProposals, setActiveProposals] = useState<any[]>([]);
-  const [isLoadingProposals, setIsLoadingProposals] = useState(false);
-
-  // Fetch total proposals when contract is available
+  // Get total proposals count when contract is available
   useEffect(() => {
     if (!contract) return;
-
-    const fetchTotalProposals = async () => {
+    
+    const getTotalProposals = async () => {
       try {
-        const { data, isLoading } = await useReadContract({
-          contract,
-          method: "function getTotalProposals() view returns (uint256)"
-        });
-        
-        if (data) {
-          setTotalProposals(BigInt(data.toString()));
-        }
+        const result = await contract.call('getTotalProposals');
+        setTotalProposals(BigInt(result.toString()));
       } catch (err) {
         console.error('Error fetching total proposals:', err);
-        setError('Failed to fetch total proposals');
+        setError('Failed to load total proposals');
       }
     };
-
-    fetchTotalProposals();
+    
+    getTotalProposals();
   }, [contract]);
 
   const getActiveProposals = useCallback(async () => {

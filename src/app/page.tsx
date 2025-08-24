@@ -7,7 +7,8 @@ import { Proposals } from "@/components/Proposals";
 import { Governance } from "@/components/Governance";
 import { NFTBadges } from "@/components/NFTBadges";
 import { Treasury } from "@/components/Treasury";
-const version = process.env.npm_package_version || '1.0.2';
+import packageInfo from '../../package.json';
+const version = packageInfo.version;
 
 export default function Home() {
   const account = useActiveAccount();
